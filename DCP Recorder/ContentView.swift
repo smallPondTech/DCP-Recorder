@@ -21,6 +21,7 @@ struct ContentView: View {
     @State private var selectedProject: DCPProject?
     @State private var selectedProjectID: PersistentIdentifier?
     @State private var preferredCompactColumn: NavigationSplitViewColumn = .sidebar
+    @State private var hasInitializedLaunchSelection = false
     @State private var saveStatus = "Not saved"
     @State private var errorMessage: String?
 
@@ -47,6 +48,9 @@ struct ContentView: View {
             projectSidebar
         } detail: {
             projectEditor
+        }
+        .onAppear {
+            initializeLaunchSelectionIfNeeded()
         }
         Group {
             Text("Copyright 2026 smallPond Technologies, LLC")
@@ -138,6 +142,12 @@ struct ContentView: View {
             Button("OK", role: .cancel) { }
         } message: {
             Text(errorMessage ?? "An unknown error occurred.")
+        }
+        .onChange(of: projectTitle) { _, _ in
+            autosaveProject()
+        }
+        .onChange(of: unitSystem) { _, _ in
+            autosaveProject()
         }
     }
 
@@ -356,6 +366,7 @@ struct ContentView: View {
         } set: { newValue in
             guard blows.indices.contains(index), newValue > 0 else { return }
             blows[index].incrementalPenetration = unitSystem.metricLength(fromDisplayed: newValue)
+            autosaveProject()
         }
     }
 
@@ -397,6 +408,7 @@ struct ContentView: View {
             blows.append(DCPBlow(incrementalPenetration: deflection))
             deflectionInput = ""
         }
+        autosaveProject()
     }
 
     private func removeLastBlow() {
@@ -404,12 +416,14 @@ struct ContentView: View {
         withAnimation {
             _ = blows.removeLast()
         }
+        autosaveProject()
     }
 
     private func clearBlows() {
         withAnimation {
             blows.removeAll()
         }
+        autosaveProject()
     }
 
     private var errorBinding: Binding<Bool> {
@@ -419,6 +433,20 @@ struct ContentView: View {
             if !isPresented {
                 errorMessage = nil
             }
+        }
+    }
+
+    private var hasDraftContent: Bool {
+        let trimmedTitle = projectTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !blows.isEmpty || (!trimmedTitle.isEmpty && trimmedTitle != "Untitled Project")
+    }
+
+    private func initializeLaunchSelectionIfNeeded() {
+        guard !hasInitializedLaunchSelection else { return }
+        hasInitializedLaunchSelection = true
+
+        if let project = projects.first {
+            loadProject(project, autosaveCurrentProject: false)
         }
     }
 
@@ -471,8 +499,10 @@ struct ContentView: View {
         return "\(baseTitle) \(index)"
     }
 
-    private func loadProject(_ project: DCPProject) {
-        autosaveProject()
+    private func loadProject(_ project: DCPProject, autosaveCurrentProject: Bool = true) {
+        if autosaveCurrentProject {
+            autosaveProject()
+        }
 
         withAnimation {
             selectedProject = project
@@ -489,7 +519,7 @@ struct ContentView: View {
     }
 
     private func autosaveProject() {
-        guard selectedProject != nil else { return }
+        guard selectedProject != nil || hasDraftContent else { return }
 
         let trimmedTitle = projectTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         let title = trimmedTitle.isEmpty ? "Untitled Project" : trimmedTitle
@@ -498,6 +528,7 @@ struct ContentView: View {
         if selectedProject == nil {
             modelContext.insert(project)
             selectedProject = project
+            selectedProjectID = project.persistentModelID
         }
 
         project.title = title
