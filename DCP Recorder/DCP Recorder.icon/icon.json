@@ -1,17 +1,23 @@
 {
-  "fill" : {
-    "automatic-gradient" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
-  },
+  "fill-specializations" : [
+    {
+      "value" : {
+        "automatic-gradient" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
+      }
+    },
+    {
+      "appearance" : "dark",
+      "value" : {
+        "automatic-gradient" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
+      }
+    }
+  ],
   "groups" : [
     {
       "layers" : [
         {
           "glass" : false,
           "hidden-specializations" : [
-            {
-              "appearance" : "light",
-              "value" : true
-            },
             {
               "appearance" : "dark",
               "value" : true
@@ -21,51 +27,15 @@
           "name" : "DCPRecorderLight"
         },
         {
+          "glass" : false,
           "hidden-specializations" : [
             {
-              "value" : true
-            },
-            {
               "appearance" : "dark",
-              "value" : true
+              "value" : false
             }
           ],
           "image-name" : "DCPRecorderDark.png",
           "name" : "DCPRecorderDark"
-        }
-      ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
-      },
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.5
-      }
-    },
-    {
-      "layers" : [
-        {
-          "glass" : false,
-          "hidden-specializations" : [
-            {
-              "appearance" : "dark",
-              "value" : true
-            }
-          ],
-          "image-name" : "DCPRecorderLight2.png",
-          "name" : "DCPRecorderLight2"
-        },
-        {
-          "glass" : false,
-          "hidden-specializations" : [
-            {
-              "appearance" : "light",
-              "value" : true
-            }
-          ],
-          "image-name" : "DCPRecorderDark2.png",
-          "name" : "DCPRecorderDark2"
         }
       ],
       "shadow" : {
