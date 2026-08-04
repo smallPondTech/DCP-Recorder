@@ -14,6 +14,7 @@ final class DCPProject {
     var createdAt: Date = Date()
     var updatedAt: Date = Date()
     var unitSystemRawValue: String = "english"
+    var blowCount: Int = 0
 
     @Relationship(deleteRule: .cascade, inverse: \DCPProjectBlow.project)
     var blows: [DCPProjectBlow]? = []
@@ -23,12 +24,14 @@ final class DCPProject {
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
         unitSystemRawValue: String = "english",
+        blowCount: Int = 0,
         blows: [DCPProjectBlow] = []
     ) {
         self.title = title
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.unitSystemRawValue = unitSystemRawValue
+        self.blowCount = blowCount
         self.blows = blows
     }
 }

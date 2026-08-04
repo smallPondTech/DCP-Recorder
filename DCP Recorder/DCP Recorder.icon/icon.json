@@ -23,8 +23,8 @@
               "value" : true
             }
           ],
-          "image-name" : "DCPRecorderLight.png",
-          "name" : "DCPRecorderLight"
+          "image-name" : "DCPRecorderLight2.png",
+          "name" : "DCPRecorderLight2"
         },
         {
           "glass" : false,
@@ -34,8 +34,8 @@
               "value" : false
             }
           ],
-          "image-name" : "DCPRecorderDark.png",
-          "name" : "DCPRecorderDark"
+          "image-name" : "DCPRecorderDark2.png",
+          "name" : "DCPRecorderDark2"
         }
       ],
       "shadow" : {

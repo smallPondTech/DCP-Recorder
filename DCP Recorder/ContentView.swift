@@ -505,14 +505,14 @@ struct ContentView: View {
         }
 
         withAnimation {
+            let storedProjectBlows = storedBlows(for: project)
+            project.blowCount = storedProjectBlows.count
             selectedProject = project
             selectedProjectID = project.persistentModelID
             projectTitle = project.title
             unitSystem = DCPUnitSystem(rawValue: project.unitSystemRawValue) ?? .english
             deflectionInput = ""
-            blows = (project.blows ?? [])
-                .sorted { $0.position < $1.position }
-                .map { DCPBlow(incrementalPenetration: $0.incrementalPenetration) }
+            blows = storedProjectBlows.map { DCPBlow(incrementalPenetration: $0.incrementalPenetration) }
             saveStatus = "Last saved \(project.updatedAt.formatted(date: .abbreviated, time: .shortened))"
             preferredCompactColumn = .detail
         }
@@ -534,6 +534,7 @@ struct ContentView: View {
         project.title = title
         project.unitSystemRawValue = unitSystem.rawValue
         project.updatedAt = Date()
+        project.blowCount = blows.count
 
         replaceStoredBlows(for: project)
 
@@ -546,18 +547,47 @@ struct ContentView: View {
     }
 
     private func replaceStoredBlows(for project: DCPProject) {
-        for storedBlow in project.blows ?? [] {
-            modelContext.delete(storedBlow)
+        let existingBlows = storedBlows(for: project)
+        let reusableCount = min(existingBlows.count, blows.count)
+
+        for index in 0..<reusableCount {
+            existingBlows[index].position = index
+            existingBlows[index].incrementalPenetration = blows[index].incrementalPenetration
         }
 
-        let storedBlows = blows.enumerated().map { index, blow in
-            DCPProjectBlow(
-                position: index,
-                incrementalPenetration: blow.incrementalPenetration,
-                project: project
-            )
+        if blows.count > existingBlows.count {
+            for index in existingBlows.count..<blows.count {
+                let storedBlow = DCPProjectBlow(
+                    position: index,
+                    incrementalPenetration: blows[index].incrementalPenetration,
+                    project: project
+                )
+                modelContext.insert(storedBlow)
+            }
         }
-        project.blows = storedBlows
+
+        if existingBlows.count > blows.count {
+            for index in blows.count..<existingBlows.count {
+                modelContext.delete(existingBlows[index])
+            }
+        }
+    }
+
+    private func storedBlows(for project: DCPProject) -> [DCPProjectBlow] {
+        let projectID = project.persistentModelID
+        let descriptor = FetchDescriptor<DCPProjectBlow>(
+            predicate: #Predicate { blow in
+                blow.project?.persistentModelID == projectID
+            },
+            sortBy: [SortDescriptor(\.position)]
+        )
+
+        do {
+            return try modelContext.fetch(descriptor)
+        } catch {
+            errorMessage = error.localizedDescription
+            return []
+        }
     }
 
     private func deleteProjects(offsets: IndexSet) {
@@ -587,8 +617,7 @@ struct ContentView: View {
         if project === selectedProject {
             sourceBlows = blows
         } else {
-            sourceBlows = (project.blows ?? [])
-                .sorted { $0.position < $1.position }
+            sourceBlows = storedBlows(for: project)
                 .map { DCPBlow(incrementalPenetration: $0.incrementalPenetration) }
         }
 
@@ -700,7 +729,7 @@ private struct ProjectRow: View {
 
             Spacer()
 
-            Text("\((project.blows ?? []).count)")
+            Text("\(project.blowCount)")
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
         }
@@ -861,6 +890,7 @@ private enum ContentPreviewData {
             let project = DCPProject(
                 title: "Sample DCP Test",
                 unitSystemRawValue: DCPUnitSystem.english.rawValue,
+                blowCount: DCPBlow.sampleData.count,
                 blows: DCPBlow.sampleData.enumerated().map { index, blow in
                     DCPProjectBlow(position: index, incrementalPenetration: blow.incrementalPenetration)
                 }
